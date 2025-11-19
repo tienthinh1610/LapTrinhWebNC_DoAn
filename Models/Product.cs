@@ -12,5 +12,11 @@ namespace SportsStore.Models
         public decimal Price { get; set; }
         
         public string Category { get; set; } = string.Empty;
+
+        // ---- THAY THẾ MainImageUrl bằng một Collection ----
+        // Một Sản phẩm sẽ có nhiều ảnh (One-to-Many Relationship)
+        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+
+        public virtual ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     }
 }

@@ -13,6 +13,9 @@
 
 <EditForm Model="Product" OnValidSubmit="SaveProduct">
     <DataAnnotationsValidator />
+    
+    @* --- PHẦN THÔNG TIN CƠ BẢN (KHÔNG ĐỔI) --- *@
+    
     @if (Product.ProductID != 0)
     {
         <div class="form-group">
@@ -40,6 +43,16 @@
         <ValidationMessage For="@(() => Product.Price)" />
         <InputNumber class="form-control" @bind-Value="Product.Price" />
     </div>
+
+    @* ---------------------------------------------------------------- *@
+    
+    @* 🌟 TÍCH HỢP COMPONENT MỚI: Quản lý Biến thể *@
+    <ProductVariantsEditor Product="Product" />
+
+    @* 🌟 TÍCH HỢP COMPONENT MỚI: Quản lý Hình ảnh *@
+    <ProductImagesEditor Product="Product" />
+
+    @* --- PHẦN THAO TÁC --- *@
     <div class="mt-2">
         <button type="submit" class="btn btn-@ThemeColor">Save</button>
         <NavLink class="btn btn-secondary" href="/admin/products">Cancel</NavLink>
@@ -55,18 +68,38 @@
     [Parameter]
     public long Id { get; set; } = 0;
 
-    public Product Product { get; set; } = new Product();
+    // 🌟 SỬA ĐỔI: Khởi tạo Product với Variants và Images là List trống để tránh lỗi Null
+    public Product Product { get; set; } = new Product { Variants = new List<ProductVariant>(), Images = new List<ProductImage>() };
 
+    // 🌟 TỐI ƯU HÓA TẢI DỮ LIỆU: Sử dụng OnInitializedAsync nếu cần async load
+    // Tuy nhiên, OnParametersSet là đủ nếu bạn chỉ cần tải từ Repository sync.
     protected override void OnParametersSet()
     {
         if (Id != 0)
         {
-            Product = Repository.Products.FirstOrDefault(p => p.ProductID == Id) ?? new();
+            // 🌟 TỐI ƯU: Cần đảm bảo Repository load Eagerly Variants và Images
+            // Giả sử Repository.GetProductWithDetails tải tất cả quan hệ
+            Product = Repository.GetProductWithDetails(Id) ?? new Product 
+            { 
+                Variants = new List<ProductVariant>(), 
+                Images = new List<ProductImage>() 
+            };
+        }
+        else
+        {
+            // Khởi tạo Product trống cho chế độ Create
+            Product = new Product 
+            { 
+                Variants = new List<ProductVariant>(), 
+                Images = new List<ProductImage>() 
+            };
         }
     }
 
     public void SaveProduct()
     {
+        // 🌟 TỐI ƯU: Đảm bảo Repository có thể xử lý việc thêm/sửa/xóa Variants/Images
+        // khi SaveProduct được gọi.
         if (Id == 0)
         {
             Repository.CreateProduct(Product);

@@ -1,16 +1,37 @@
 @model IEnumerable<string>
 
-<div class="d-grid gap-2">
-    <a class="btn btn-outline-secondary" asp-action="Index" asp-controller="Home" asp-route-category="">
-        Home
-    </a>
-    @foreach (string category in Model ?? Enumerable.Empty<string>())
-    {
-        <a class="btn @(category == ViewBag.SelectedCategory ? "btn-primary" : "btn-outline-secondary")" 
-           asp-action="Index" asp-controller="Home"
-           asp-route-category="@category" 
-           asp-route-productPage="1">
-            @category
+<nav class="navbar navbar-expand-lg navbar-light bg-light rounded-2 shadow-sm p-0">
+    <div class="container-fluid">
+        <a class="btn btn-sm btn-outline-primary me-2 fw-bold" 
+           asp-action="Index" asp-controller="Home" asp-route-category="">
+            <i class="fas fa-home me-1"></i> Trang chủ
         </a>
-    }
-</div>
+
+        <ul class="navbar-nav flex-row overflow-x-auto" id="draggable-menu">
+            @foreach (string category in Model ?? Enumerable.Empty<string>())
+            {
+                <li class="nav-item me-1" draggable="true">
+                   <a class="btn btn-lg @(category == ViewBag.SelectedCategory ? "btn-primary" : "btn-outline-secondary")"
+                       asp-action="Index" asp-controller="Home"
+                       asp-route-category="@category" 
+                       asp-route-productPage="1">
+                        @category
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+</nav>
+
+<style>
+/* Đảm bảo menu cuộn ngang nếu có nhiều danh mục */
+#draggable-menu {
+    flex-wrap: nowrap; 
+    white-space: nowrap; 
+    padding-bottom: 5px; /* Giữ khoảng cách cho thanh cuộn */
+}
+/* Hiệu ứng kéo thả */
+#draggable-menu li {
+    cursor: move; /* Thay đổi con trỏ chuột */
+}
+</style>

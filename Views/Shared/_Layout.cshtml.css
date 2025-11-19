@@ -46,3 +46,9 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+.logo-icon {
+    /* Đặt chiều cao mong muốn cho icon */
+    height: 30px; 
+    /* Đảm bảo hình ảnh được căn chỉnh đúng */
+    vertical-align: middle; 
+}

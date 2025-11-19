@@ -22,32 +22,6 @@ namespace SportsStore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("SportsStore.Models.CartLine", b =>
-                {
-                    b.Property<int>("CartLineID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartLineID"));
-
-                    b.Property<int?>("OrderID")
-                        .HasColumnType("int");
-
-                    b.Property<long>("ProductID")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("CartLineID");
-
-                    b.HasIndex("OrderID");
-
-                    b.HasIndex("ProductID");
-
-                    b.ToTable("CartLine");
-                });
-
             modelBuilder.Entity("SportsStore.Models.Order", b =>
                 {
                     b.Property<int>("OrderID")
@@ -81,6 +55,9 @@ namespace SportsStore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("OrderPlaced")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("Shipped")
                         .HasColumnType("bit");
 
@@ -94,6 +71,44 @@ namespace SportsStore.Migrations
                     b.HasKey("OrderID");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.OrderLine", b =>
+                {
+                    b.Property<int>("OrderLineID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderLineID"));
+
+                    b.Property<int>("OrderID")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductID")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductSize")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProductVariantID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrderLineID");
+
+                    b.HasIndex("OrderID");
+
+                    b.ToTable("OrderLines");
                 });
 
             modelBuilder.Entity("SportsStore.Models.Product", b =>
@@ -117,24 +132,99 @@ namespace SportsStore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(8, 2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("ProductID");
 
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("SportsStore.Models.CartLine", b =>
+            modelBuilder.Entity("SportsStore.Models.ProductImage", b =>
                 {
-                    b.HasOne("SportsStore.Models.Order", null)
-                        .WithMany("Lines")
-                        .HasForeignKey("OrderID");
+                    b.Property<int>("ProductImageID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.HasOne("SportsStore.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductID")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductImageID"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsMainImage")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("ProductID")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ProductImageID");
+
+                    b.HasIndex("ProductID");
+
+                    b.ToTable("ProductImage");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.ProductVariant", b =>
+                {
+                    b.Property<int>("ProductVariantID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductVariantID"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ProductID")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Size")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProductVariantID");
+
+                    b.HasIndex("ProductID");
+
+                    b.ToTable("ProductVariant");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.OrderLine", b =>
+                {
+                    b.HasOne("SportsStore.Models.Order", "Order")
+                        .WithMany("Lines")
+                        .HasForeignKey("OrderID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.ProductImage", b =>
+                {
+                    b.HasOne("SportsStore.Models.Product", "Product")
+                        .WithMany("Images")
+                        .HasForeignKey("ProductID");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.ProductVariant", b =>
+                {
+                    b.HasOne("SportsStore.Models.Product", "Product")
+                        .WithMany("Variants")
+                        .HasForeignKey("ProductID");
 
                     b.Navigation("Product");
                 });
@@ -142,6 +232,13 @@ namespace SportsStore.Migrations
             modelBuilder.Entity("SportsStore.Models.Order", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("SportsStore.Models.Product", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }

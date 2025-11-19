@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using SportsStore.Infrastructure;
+using Microsoft.AspNetCore.Http; // Cần thêm using này
 
 namespace SportsStore.Models
 {
@@ -17,15 +18,19 @@ namespace SportsStore.Models
         [JsonIgnore]
         public ISession? Session { get; set; }
 
-        public override void AddItem(Product product, int quantity)
+        // 🌟 SỬA LỖI 1: Cập nhật chữ ký AddItem để nhận ProductVariantID
+        public override void AddItem(Product product, int quantity, int? productVariantId)
         {
-            base.AddItem(product, quantity);
+            // Gọi phương thức AddItem của lớp cha (đã được sửa)
+            base.AddItem(product, quantity, productVariantId);
             Session?.SetJson("Cart", this);
         }
 
-        public override void RemoveLine(Product product)
+        // 🌟 SỬA LỖI 2: Cập nhật chữ ký RemoveLine để nhận ProductVariantID
+        public override void RemoveLine(Product product, int? productVariantId = null)
         {
-            base.RemoveLine(product);
+            // Gọi phương thức RemoveLine của lớp cha (đã được sửa)
+            base.RemoveLine(product, productVariantId);
             Session?.SetJson("Cart", this);
         }
 

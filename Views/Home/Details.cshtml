@@ -1,0 +1,152 @@
+@model Product
+
+@{
+    ViewData["Title"] = @Model.Name;
+    // Lấy danh sách tất cả các ảnh
+    var allImages = Model.Images?.OrderBy(img => img.DisplayOrder).ToList() ?? new List<ProductImage>();
+    // Lấy ảnh chính (hoặc ảnh đầu tiên nếu không có ảnh chính)
+    var mainImage = allImages.FirstOrDefault(img => img.IsMainImage) ?? allImages.FirstOrDefault();
+    var mainImageUrl = mainImage?.ImageUrl ?? "/images/placeholder-664.webp";
+
+    // Lấy danh sách size duy nhất để hiển thị nút
+    var distinctSizes = Model.Variants?.Select(v => v.Size).Distinct().OrderBy(s => s).ToList() ?? new List<string>();
+}
+
+<div class="container mt-4">
+    <div class="row g-4">
+        
+        <div class="col-lg-6 col-md-12">
+            
+            <div class="main-image-display border p-2 rounded mb-3 shadow-sm">
+                <img id="mainProductImage" src="@mainImageUrl" alt="@Model.Name" class="img-fluid" 
+                     style="height: 500px; object-fit: contain; width: 100%;" />
+            </div>
+
+            @if (allImages.Count > 1)
+            {
+                <div class="d-flex flex-wrap gallery-thumbnails">
+                    @foreach (var img in allImages)
+                    {
+                        <img src="@img.ImageUrl" alt="Thumbnail" 
+                             class="img-thumbnail me-2 mb-2 thumbnail-item @(img.IsMainImage ? "active-thumbnail" : "")" 
+                             style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                             data-full-url="@img.ImageUrl" />
+                    }
+                </div>
+            }
+        </div>
+        
+        <div class="col-lg-6 col-md-12 product-info-area">
+            
+            <h1 class="display-5 fw-bold mb-1">@Model.Name</h1>
+            <p class="text-muted fs-6 mb-3">Danh mục: **@Model.Category**</p>
+            
+            <h2 class="text-danger fw-bolder mb-4 display-4">@Model.Price.ToString("c")</h2>
+            
+            <hr />
+            
+            <form asp-page="/Cart" method="post" id="addToCartForm">
+                
+                <input type="hidden" asp-for="ProductID" />
+                <input type="hidden" name="SelectedVariantId" id="selectedVariantId" value="" />
+                <input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.PathAndQuery()" />
+                
+                @if (Model.Variants != null && Model.Variants.Any())
+                {
+                    <h4 class="mb-3">Chọn Kích cỡ:</h4>
+                    <div class="btn-group mb-4" role="group" id="sizeSelectionGroup">
+                        @foreach (var size in distinctSizes)
+                        {
+                            <button type="button" 
+                                    class="btn btn-outline-dark size-btn" 
+                                    data-size="@size">
+                                @size
+                            </button>
+                        }
+                    </div>
+                }
+
+                <div class="alert alert-warning d-none" role="alert" id="sizeErrorAlert">
+                    Vui lòng chọn một kích cỡ trước khi thêm vào giỏ hàng!
+                </div>
+                
+                <button type="submit" class="btn btn-lg btn-success w-100 mt-3 shadow-lg">
+                    <i class="fas fa-shopping-cart me-2"></i> Thêm vào Giỏ hàng
+                </button>
+            </form>
+            
+            <hr class="mt-5" />
+
+            <h3 class="mb-3">Mô tả Sản phẩm</h3>
+            <p style="white-space: pre-wrap;">@Model.Description</p>
+            
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sizeButtons = document.querySelectorAll('.size-btn');
+        const addToCartForm = document.getElementById('addToCartForm');
+        const selectedVariantIdInput = document.getElementById('selectedVariantId');
+        const sizeErrorAlert = document.getElementById('sizeErrorAlert');
+        const mainImage = document.getElementById('mainProductImage');
+        const thumbnails = document.querySelectorAll('.thumbnail-item');
+        
+        let selectedSize = null;
+        let variants = @Html.Raw(Json.Serialize(Model.Variants));
+
+        // 1. Xử lý Lựa chọn Size
+        sizeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Xóa trạng thái active của tất cả các nút
+                sizeButtons.forEach(btn => btn.classList.remove('active', 'btn-primary'));
+                
+                // Đặt trạng thái active cho nút hiện tại
+                this.classList.add('active', 'btn-primary');
+                selectedSize = this.dataset.size;
+                sizeErrorAlert.classList.add('d-none');
+            });
+        });
+
+        // 2. Xử lý Submission Form (Thêm vào Giỏ hàng)
+        addToCartForm.addEventListener('submit', function(event) {
+            // Chỉ cần xử lý nếu có biến thể để chọn size
+            if (variants && variants.length > 0 && !selectedSize) {
+                event.preventDefault(); // Ngăn form submit
+                sizeErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            // Tìm VariantID phù hợp với size đã chọn
+            if (selectedSize) {
+                const selectedVariant = variants.find(v => v.size === selectedSize);
+                if (selectedVariant) {
+                    // Gán VariantID vào input ẩn để gửi đi
+                    selectedVariantIdInput.value = selectedVariant.productVariantID;
+                }
+            }
+        });
+
+        // 3. Xử lý Gallery Thumbnail (Chuyển ảnh)
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                // Đổi ảnh chính
+                const fullUrl = this.dataset.fullUrl;
+                mainImage.src = fullUrl;
+                
+                // Cập nhật trạng thái active
+                thumbnails.forEach(t => t.classList.remove('active-thumbnail'));
+                this.classList.add('active-thumbnail');
+            });
+        });
+    });
+</script>
+<style>
+/* CSS cho ảnh thumbnail được chọn */
+.active-thumbnail {
+    border: 3px solid #0d6efd !important; /* Màu viền primary của Bootstrap */
+}
+</style>
+}

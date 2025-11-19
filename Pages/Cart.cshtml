@@ -1,57 +1,102 @@
 @page
 @model CartModel
+@using System.Linq
 
-<h2>Your cart</h2>
+@{
+    ViewData["Title"] = "Giỏ hàng của bạn";
+}
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Quantity</th>
-            <th>Item</th>
-            <th class="text-right">Price</th>
-            <th class="text-right">Subtotal</th>
-            <th></th> <!-- Thêm cột cho nút Remove -->
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var line in Model.Cart.Lines)
-        {
-            <tr>
-                <td class="text-center">@line.Quantity</td>
-                <td class="text-left">@line.Product.Name</td>
-                <td class="text-right">@line.Product.Price.ToString("c")</td>
-                <td class="text-right">
-                    @((line.Quantity * line.Product.Price).ToString("c"))
-                </td>
-                <td class="text-center">
-                    <form asp-page-handler="Remove" method="post">
-                        <input type="hidden" name="productId" 
-                               value="@line.Product.ProductID" />
-                        <input type="hidden" name="returnUrl" 
-                               value="@Model.ReturnUrl" />
-                        <button type="submit" class="btn btn-sm btn-danger">
-                            Remove
-                        </button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-    <tfoot>
-        <tr>
-            <td colspan="3" class="text-right">Total:</td>
-            <td class="text-right">
-                @Model.Cart.ComputeTotalValue().ToString("c")
-            </td>
-            <td></td>
-        </tr>
-    </tfoot>
-</table>
+<div class="container my-5">
+    <h2 class="mb-4 display-5 fw-bold text-primary">Giỏ hàng của bạn</h2>
 
-<div class="text-center">
-    <a class="btn btn-primary" href="@Model.ReturnUrl">Continue shopping</a>
-    <!-- Thêm nút Checkout -->
-    <a class="btn btn-primary" asp-action="Checkout" asp-controller="Order">
-        Checkout
-    </a>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th colspan="2">Sản phẩm</th> 
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-right">Giá/SP</th>
+                                <th class="text-right">Tổng phụ</th>
+                                <th></th> </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in Model.Cart.Lines)
+                            {
+                                // Tìm ảnh chính cho sản phẩm
+                                var mainImageUrl = line.Product.Images?.FirstOrDefault(img => img.IsMainImage)?.ImageUrl 
+                                                 ?? "/images/placeholder-664.webp";
+                                                 
+                                // Giả sử CartLine có lưu thông tin Variant/Size được chọn
+                                // Nếu không có trường Variant/Size trong CartLine, bạn cần thêm nó vào CartLine Model
+                                var selectedSize = line.Product.Variants?.FirstOrDefault(v => v.ProductVariantID == line.ProductVariantID)?.Size ?? "N/A";
+
+                                <tr>
+                                    <td style="width: 100px;">
+                                        <img src="@mainImageUrl" alt="@line.Product.Name" 
+                                             class="img-fluid rounded" style="height: 70px; object-fit: cover;" />
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="fw-bold">@line.Product.Name</div>
+                                        <small class="text-muted">Kích cỡ: **@selectedSize**</small>
+                                        @* Nếu có thêm thông tin màu sắc, hãy hiển thị ở đây *@
+                                    </td>
+                                    
+                                    <td class="text-center align-middle">
+                                        <span class="badge bg-secondary fs-6">@line.Quantity</span>
+                                    </td>
+                                    
+                                    <td class="text-right align-middle fw-bold">@line.Product.Price.ToString("c")</td>
+                                    
+                                    <td class="text-right align-middle fw-bold text-success">
+                                        @((line.Quantity * line.Product.Price).ToString("c"))
+                                    </td>
+                                    
+                                    <td class="text-center align-middle">
+                                        <form asp-page-handler="Remove" method="post">
+                                            <input type="hidden" name="productId" 
+                                                   value="@line.Product.ProductID" />
+                                            <input type="hidden" name="returnUrl" 
+                                                   value="@Model.ReturnUrl" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-lg sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white fw-bold fs-5">
+                    Tóm tắt Đơn hàng
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3 fs-5">
+                        <span class="fw-normal">Tổng cộng:</span>
+                        <span class="fw-bolder text-dark">
+                            @Model.Cart.ComputeTotalValue().ToString("c")
+                        </span>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <a class="btn btn-success btn-lg fw-bold" asp-action="Checkout" asp-controller="Order">
+                            <i class="fas fa-credit-card me-2"></i> Thanh toán
+                        </a>
+                        <a class="btn btn-outline-secondary" href="@Model.ReturnUrl">
+                            <i class="fas fa-arrow-left me-2"></i> Tiếp tục mua sắm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

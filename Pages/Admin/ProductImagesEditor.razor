@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using System.IO
+
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
+
+@* Component: ProductImagesEditor.razor *@
+<div class="p-3 border rounded mt-3 bg-light">
+    <h5 class="text-primary">Quản lý Hình ảnh Sản phẩm</h5>
+
+    @* --- Hiển thị các Hình ảnh hiện có --- *@
+    <div class="d-flex flex-wrap mb-3">
+        @if (Product.Images?.Count > 0)
+        {
+            @foreach (var image in Product.Images)
+            {
+                <div class="card me-2 mb-2" style="width: 10rem;">
+                    <img src="@image.ImageUrl" class="card-img-top p-2" alt="Product Image" style="height: 100px; object-fit: contain;">
+                    <div class="card-body p-1 text-center">
+                        <small class="text-muted">@image.DisplayOrder</small>
+                        <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="@(() => RemoveImage(image))">Xóa</button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted">Sản phẩm chưa có hình ảnh nào.</p>
+        }
+    </div>
+
+    @* --- Form để Thêm Image mới bằng cách Chọn File --- *@
+    <div class="d-flex align-items-end mt-3">
+        <div class="form-group me-2 flex-grow-1">
+            <label>Chọn File Hình ảnh</label>
+            @* 🌟 SỬ DỤNG INPUTFILE THAY VÌ INPUTTEXT *@
+            <InputFile OnChange="@HandleFileSelection" class="form-control" accept="image/*" />
+        </div>
+        <div class="form-group me-2" style="width: 100px;">
+            <label>Thứ tự</label>
+            <InputNumber class="form-control" @bind-Value="newDisplayOrder" />
+        </div>
+        @if (isLoading)
+        {
+             <button type="button" class="btn btn-warning" disabled>Đang tải...⏳</button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Product Product { get; set; } = new Product();
+
+    private IBrowserFile? selectedFile;
+    private int newDisplayOrder { get; set; } = 1;
+    private bool isLoading = false;
+    
+    // Giới hạn kích thước file (ví dụ: 5MB)
+    private const long MaxFileSize = 1024 * 1024 * 5; 
+
+    // Phương thức lắng nghe sự kiện khi người dùng chọn file
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+
+        if (selectedFile != null)
+        {
+            isLoading = true;
+            StateHasChanged(); // Cập nhật trạng thái loading
+
+            // 1. TẠO TÊN FILE DUY NHẤT VÀ ĐƯỜNG DẪN LƯU TRỮ
+            var uniqueFileName = $"{Guid.NewGuid().ToString()}_{selectedFile.Name}";
+            var uploadPath = Path.Combine(WebHostEnvironment.WebRootPath, "images", uniqueFileName);
+            var relativeUrl = $"/images/{uniqueFileName}";
+            
+            try
+            {
+                // 2. LƯU FILE VÀO THƯ MỤC wwwroot/images
+                await using FileStream fs = new(uploadPath, FileMode.Create);
+                await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(fs);
+
+                // 3. THÊM URL TƯƠNG ĐỐI VÀO DANH SÁCH HÌNH ẢNH CỦA SẢN PHẨM
+                if (Product.Images == null) Product.Images = new List<ProductImage>();
+
+                Product.Images.Add(new ProductImage
+                {
+                    ImageUrl = relativeUrl, // Lưu đường dẫn tương đối để truy cập web
+                    DisplayOrder = newDisplayOrder,
+                    IsMainImage = Product.Images.Count == 0 
+                });
+
+                // Cập nhật thứ tự hiển thị cho lần tiếp theo
+                newDisplayOrder = Product.Images.Count > 0 ? Product.Images.Max(i => i.DisplayOrder) + 1 : 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi upload file: {ex.Message}");
+                // Thêm logic thông báo lỗi cho người dùng nếu cần
+            }
+            finally
+            {
+                selectedFile = null;
+                isLoading = false;
+            }
+        }
+    }
+
+    // Phương thức xóa Image
+    private void RemoveImage(ProductImage image)
+    {
+        if (Product.Images != null)
+        {
+            Product.Images.Remove(image);
+        }
+    }
+}

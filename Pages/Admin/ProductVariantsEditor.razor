@@ -1,0 +1,103 @@
+@* Component: ProductVariantsEditor.razor *@
+<div class="p-3 border rounded mt-3 bg-light">
+    <h5 class="text-primary">Quản lý Biến thể Sản phẩm (Size)</h5>
+    
+    @* --- Bảng hiển thị và chỉnh sửa các Variants hiện có --- *@
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Size</th>
+                <th>Số lượng (Quantity)</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Product.Variants?.Count > 0)
+            {
+                @foreach (var variant in Product.Variants)
+                {
+                    <tr>
+                        <td>
+                            @* 🌟 Hiển thị Size, không cho sửa trực tiếp (vì là khóa logic) *@
+                            <span class="fw-bold">@variant.Size</span>
+                        </td>
+                        <td>
+                            @* Cho phép chỉnh sửa Quantity *@
+                            <InputNumber class="form-control form-control-sm" @bind-Value="variant.Quantity" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => RemoveVariant(variant))">
+                                Xóa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="3" class="text-center text-muted">Chưa có biến thể nào.</td></tr>
+            }
+        </tbody>
+    </table>
+
+    @* --- Form để thêm Variant mới --- *@
+    <div class="d-flex align-items-end mt-3">
+        <div class="form-group me-2">
+            <label>Size mới</label>
+            <InputText class="form-control" placeholder="Ví dụ: 38, 40, S, M" @bind-Value="newSize" />
+        </div>
+        <div class="form-group me-2">
+            <label>Số lượng</label>
+            <InputNumber class="form-control" @bind-Value="newQuantity" />
+        </div>
+        <button type="button" class="btn btn-success" @onclick="AddVariant">
+            Thêm Size
+        </button>
+    </div>
+</div>
+
+@code {
+    // 🌟 Product được truyền vào từ Editor.razor
+    [Parameter]
+    public Product Product { get; set; } = new Product(); 
+
+    // Biến tạm để thêm Variant mới
+    private string newSize { get; set; } = string.Empty;
+    private int newQuantity { get; set; } = 1;
+
+    // Phương thức thêm Variant
+    private void AddVariant()
+    {
+        if (!string.IsNullOrWhiteSpace(newSize) && newQuantity >= 0)
+        {
+            // Kiểm tra trùng lặp Size
+            if (Product.Variants == null) Product.Variants = new List<ProductVariant>();
+            
+            if (Product.Variants.Any(v => v.Size.Equals(newSize.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                // Thêm logic thông báo lỗi trùng lặp nếu cần
+                return;
+            }
+
+            Product.Variants.Add(new ProductVariant
+            {
+                Size = newSize.Trim(),
+                Quantity = newQuantity,
+                // ProductID sẽ được EF Core tự gán khi SaveProduct
+            });
+
+            // Reset form
+            newSize = string.Empty;
+            newQuantity = 1;
+        }
+    }
+
+    // Phương thức xóa Variant
+    private void RemoveVariant(ProductVariant variant)
+    {
+        if (Product.Variants != null)
+        {
+            Product.Variants.Remove(variant);
+        }
+    }
+}

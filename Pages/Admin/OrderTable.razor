@@ -8,8 +8,8 @@
                 <tr>
                     <td>@o.Name</td>
                     <td>@o.Zip</td>
-                    <th>Product</th>
-                    <th>Quantity</th>
+                    <th>Sản phẩm</th> 
+                    <th>SL & Size</th> 
                     <td>
                         <button class="btn btn-sm btn-danger"
                                 @onclick="@(e => OrderSelected.InvokeAsync(o.OrderID))">
@@ -17,17 +17,28 @@
                         </button>
                     </td>
                 </tr>
-                @foreach (CartLine line in o.Lines) {
+                
+                @* Lặp qua chi tiết từng dòng đơn hàng *@
+                @foreach (OrderLine line in o.Lines) { 
                     <tr>
                         <td colspan="2"></td>
-                        <td>@line.Product.Name</td>
-                        <td>@line.Quantity</td>
+                        
+                        @* Hiển thị Tên Sản phẩm *@
+                        <td>
+                            <span class="fw-bold">@line.ProductName</span>
+                        </td>
+                        
+                        @* 🌟 ĐIỀU CHỈNH: Hiển thị Size và Quantity rõ ràng hơn *@
+                        <td>
+                            @line.Quantity x 
+                            <span class="badge bg-info text-dark">Size: @line.ProductSize</span>
+                        </td>
                         <td></td>
                     </tr>
                 }
             }
         } else {
-            <tr><td colspan="5" class="text-center">No Orders</td></tr>
+            <tr><td colspan="5" class="text-center">Không có đơn hàng nào</td></tr>
         }
     </tbody>
 </table>

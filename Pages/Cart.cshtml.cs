@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using SportsStore.Models;
 
 namespace SportsStore.Pages
@@ -20,17 +21,32 @@ namespace SportsStore.Pages
         public void OnGet(string returnUrl)
         {
             ReturnUrl = returnUrl ?? "/";
-            // Không cần lấy cart từ session nữa vì đã được inject
+            
+            // ----------------------------------------------------
+            // 🌟 LOGIC TẢI LẠI DỮ LIỆU ĐỂ HIỂN THỊ ẢNH VÀ SIZE
+            // ----------------------------------------------------
+            foreach (var line in Cart.Lines)
+            {
+                // Truy vấn lại Product từ DB, và BẮT BUỘC Include các collection
+                line.Product = repository.Products
+                    .Include(p => p.Images)    // ⬅️ Tải Ảnh
+                    .Include(p => p.Variants)  // ⬅️ Tải Variants/Size
+                    .FirstOrDefault(p => p.ProductID == line.Product.ProductID);
+            }
         }
 
-        public IActionResult OnPost(long productId, string returnUrl)
+        public IActionResult OnPost(long productId, string returnUrl, int? selectedVariantId)
         {
             Product? product = repository.Products
                 .FirstOrDefault(p => p.ProductID == productId);
+            
             if (product != null)
             {
-                Cart.AddItem(product, 1);
+                // 2. Gọi AddItem với tham số ProductVariantID đã nhận được
+                // Cẩn thận đừng quên số 1 (Quantity) nhé!
+                Cart.AddItem(product, 1, selectedVariantId); 
             }
+            
             return RedirectToPage(new { returnUrl = returnUrl });
         }
 

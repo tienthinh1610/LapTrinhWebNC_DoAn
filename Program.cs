@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SportsStore.Models;
 using Microsoft.AspNetCore.Identity;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,14 @@ builder.Services.AddDbContext<AppIdentityDbContext>(options =>
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppIdentityDbContext>();
+
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // 🌟 Giải pháp cuối cùng: Cho phép xử lý vòng lặp
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.MaxDepth = 64; // Tăng độ sâu tối đa
+    });
 
 var app = builder.Build();
 
