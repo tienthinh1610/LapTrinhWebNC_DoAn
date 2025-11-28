@@ -18,8 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using SportsStore.Areas.Identity.Data; 
-
+using SportsStore.Areas.Identity.Data; // Đảm bảo đúng namespace
 
 namespace SportsStore.Areas.Identity.Pages.Account
 {
@@ -47,60 +46,50 @@ namespace SportsStore.Areas.Identity.Pages.Account
             _emailSender = emailSender;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
+        // Cập nhật InputModel: Thêm FullName, DateOfBirth, Address
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "Vui lòng nhập Email.")]
+            [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+            [StringLength(100, ErrorMessage = "{0} phải có ít nhất {2} và tối đa {1} ký tự.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "Password")]
+            [Display(Name = "Mật khẩu")]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            [Display(Name = "Xác nhận mật khẩu")]
+            [Compare("Password", ErrorMessage = "Mật khẩu và xác nhận mật khẩu không khớp.")]
             public string ConfirmPassword { get; set; }
-        }
 
+            // -------------------------------------------------------------------
+            // THUỘC TÍNH TÙY CHỈNH MỚI
+            // -------------------------------------------------------------------
+            [Required(ErrorMessage = "Vui lòng nhập Họ và Tên.")]
+            [StringLength(100, ErrorMessage = "{0} không được dài hơn 100 ký tự.")]
+            [Display(Name = "Họ và Tên")]
+            public string FullName { get; set; }
+
+            [Required(ErrorMessage = "Vui lòng nhập Ngày sinh.")]
+            [DataType(DataType.Date)]
+            [Display(Name = "Ngày sinh")]
+            public DateTime DateOfBirth { get; set; }
+
+            [StringLength(200, ErrorMessage = "{0} không được dài hơn 200 ký tự.")]
+            [Display(Name = "Địa chỉ")]
+            public string Address { get; set; }
+            // -------------------------------------------------------------------
+        }
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -112,12 +101,20 @@ namespace SportsStore.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+                // 🌟 BƯỚC CẬP NHẬT: GÁN CÁC THUỘC TÍNH TÙY CHỈNH TỪ Input MODEL VÀO ApplicationUser 🌟
+                user.FullName = Input.FullName;
+                user.DateOfBirth = Input.DateOfBirth;
+                user.Address = Input.Address;
+                // ----------------------------------------------------------------------------------
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)

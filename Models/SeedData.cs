@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SportsStore.Models
 {
@@ -11,14 +12,20 @@ namespace SportsStore.Models
             StoreDbContext context = app.ApplicationServices
                 .CreateScope().ServiceProvider.GetRequiredService<StoreDbContext>();
 
-            if (context.Database.GetPendingMigrations().Any())
-            {
-                context.Database.Migrate();
-            }
+            // ❌ ĐÃ XÓA KHỐI LỆNH SAU:
+            // if (context.Database.GetPendingMigrations().Any())
+            // {
+            //     context.Database.Migrate();
+            // }
+            // Lý do: Lệnh Migrate() tự động gây lỗi "Object already exists" khi database đã có bảng Products.
+            // Việc tạo bảng cần được thực hiện bằng lệnh CLI: 'dotnet ef database update -c StoreDbContext' 
+            // trước khi chạy ứng dụng lần đầu tiên.
 
+            // Chỉ thêm dữ liệu nếu chưa có sản phẩm nào
             if (!context.Products.Any())
             {
                 // Danh sách Size cố định để tái sử dụng
+                // CẦN ĐẢM BẢO MODEL ProductVariant CÓ THUỘC TÍNH Size, Color, Quantity
                 var sizes = new List<string> { "40", "41", "42" };
                 const int DefaultQuantity = 3;
 
@@ -103,9 +110,9 @@ namespace SportsStore.Models
                         }
                     },
                     
-                    // VÀ TIẾP TỤC KHỞI TẠO TƯỜNG MINH CHO CÁC SẢN PHẨM KHÁC (Asics1, Asics2, NewBalance1, NewBalance2...)
-                    
-                    // Ví dụ: Asics1
+                    // =========================================================================
+                    // 👟 SẢN PHẨM 4: Asics1
+                    // =========================================================================
                     new Product
                     {
                         Name = "Asics Court MZ",
@@ -125,6 +132,8 @@ namespace SportsStore.Models
                             new ProductImage { ImageUrl = "/images/asics_1203A127_750(2).jpeg", IsMainImage = false, DisplayOrder = 3 }
                         }
                     }
+                    // Thêm Asics2, NewBalance1, NewBalance2... theo cấu trúc tương tự nếu cần.
+                    // ... 
                 );
                 
                 context.SaveChanges();

@@ -6,22 +6,31 @@
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
+    // Lấy thông tin người dùng đầy đủ (bao gồm FullName) bất đồng bộ
+    var user = await UserManager.GetUserAsync(User);
+    var fullName = user?.FullName ?? UserManager.GetUserName(User); // Ưu tiên hiển thị FullName, nếu không có thì dùng Email (UserName)
+
     <li class="nav-item">
-        <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
+        @* Hiển thị FullName thay vì chỉ UserName (Email) *@
+        <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Quản lý tài khoản">Xin chào, @fullName!</a>
     </li>
     <li class="nav-item">
         <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
-            <button id="logout" type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+            <button id="logout" type="submit" class="nav-link btn btn-link text-dark">Đăng xuất</button> @* Đã dịch nút *@
         </form>
     </li>
 }
 else
 {
     <li class="nav-item">
-        <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        <a class="btn btn-warning btn-identity" id="register" asp-area="Identity" asp-page="/Account/Register">
+            Đăng ký
+        </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        <a class="btn btn-outline-light btn-identity ms-2" id="login" asp-area="Identity" asp-page="/Account/Login">
+            Đăng nhập
+        </a>
     </li>
 }
 </ul>

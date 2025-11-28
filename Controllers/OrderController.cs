@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using SportsStore.Models;
-using Microsoft.EntityFrameworkCore; // Cần thiết nếu bạn muốn Eager Load dữ liệu Product
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity; // Cần thiết cho Identity
+using SportsStore.Areas.Identity.Data; // Cần thiết cho ApplicationUser
+using System.Linq;
+using System.Threading.Tasks; // Cần thiết cho async/await
+using Microsoft.AspNetCore.Authorization; // Vẫn giữ lại nhưng không áp dụng cho GET Checkout
 
 namespace SportsStore.Controllers
 {
@@ -8,18 +13,56 @@ namespace SportsStore.Controllers
     {
         private IOrderRepository repository;
         private Cart cart;
+        // Giữ lại UserManager để dùng khi người dùng ĐÃ đăng nhập
+        private readonly UserManager<ApplicationUser> userManager; 
 
-        public OrderController(IOrderRepository repoService, Cart cartService)
+        // Constructor CẬP NHẬT: Thêm UserManager
+        public OrderController(IOrderRepository repoService, Cart cartService, UserManager<ApplicationUser> userMgr)
         {
             repository = repoService;
             cart = cartService;
+            userManager = userMgr; 
         }
         
+        // --- Phương thức GET: Hiển thị form Checkout ---
+        // 🌟 CẬP NHẬT: ĐÃ XÓA [Authorize] để cho phép Khách vãng lai (Guest) truy cập 🌟
+        [HttpGet]
+        public async Task<ViewResult> Checkout()
+        {
+            var order = new Order();
+            
+            // 🌟 LOGIC CẬP NHẬT: CHỈ TỰ ĐỘNG ĐIỀN NẾU NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP 🌟
+            if (User.Identity.IsAuthenticated)
+            {
+                ApplicationUser? user = await userManager.GetUserAsync(User);
 
-        public ViewResult Checkout() => View(new Order());
+                if (user != null)
+                {
+                    // Ánh xạ các trường từ ApplicationUser sang Order
+                    // Tên người nhận (Name) -> FullName
+                    order.Name = user.FullName;
 
+                    // Email -> Email
+                    order.Email = user.Email;
+
+                    // Số điện thoại (PhoneNumber) -> PhoneNumber
+                    order.PhoneNumber = user.PhoneNumber; 
+                    
+                    // Dòng 1 (Line 1) -> Address
+                    order.Line1 = user.Address;
+
+                    // Các trường địa chỉ còn lại để trống theo yêu cầu
+                }
+            } else {
+                 // Nếu không đăng nhập, trả về Order trống để người dùng tự nhập
+            }
+            
+            return View(order);
+        }
+
+        // --- Phương thức POST: Xử lý khi Submit form ---
         [HttpPost]
-        public IActionResult Checkout(Order order)
+        public async Task<IActionResult> Checkout(Order order)
         {
             if (cart.Lines.Count() == 0)
             {
@@ -28,27 +71,32 @@ namespace SportsStore.Controllers
 
             if (ModelState.IsValid)
             {
-                // 1. Gán OrderLine bằng cách chuyển đổi từ CartLine
+                // 🌟 LOGIC CẬP NHẬT: Gán AppUserId chỉ khi ĐÃ đăng nhập 🌟
+                if (User.Identity.IsAuthenticated)
+                {
+                    // Lấy ID của người dùng hiện tại và gán vào khóa ngoại
+                    order.AppUserId = userManager.GetUserId(User);
+                } else {
+                    // Nếu là khách vãng lai, AppUserId sẽ là NULL (hoặc 0)
+                    order.AppUserId = null; 
+                }
+                
+                // 1. Gán OrderLine bằng cách chuyển đổi từ CartLine (Giữ nguyên logic cũ)
                 order.Lines = cart.Lines
                     .Select(cl => new OrderLine
                     {
-                        // 🌟 Sao chép thông tin Sản phẩm Gốc
                         ProductID = (long)cl.Product.ProductID,
                         ProductName = cl.Product.Name,
-                        
-                        // 🌟 Sao chép thông tin Biến thể (Size)
                         ProductVariantID = cl.ProductVariantID,
                         ProductSize = cl.Product.Variants
-                                        ?.FirstOrDefault(v => v.ProductVariantID == cl.ProductVariantID)?.Size 
-                                        ?? "N/A", // Tìm Size dựa trên VariantID
-                                        
-                        // 🌟 Sao chép Giá và Số lượng tại thời điểm đặt hàng
-                        Price = cl.Product.Price, // Giá hiện tại của sản phẩm
+                                                 ?.FirstOrDefault(v => v.ProductVariantID == cl.ProductVariantID)?.Size 
+                                                 ?? "N/A",
+                        Price = cl.Product.Price,
                         Quantity = cl.Quantity,
                         
-                    }).ToList(); // Chuyển đổi thành List<OrderLine>
+                    }).ToList();
 
-                // 2. Cập nhật thời điểm đặt hàng (Tùy chọn, nhưng nên có)
+                // 2. Cập nhật thời điểm đặt hàng
                 order.OrderPlaced = DateTime.Now; 
                 
                 // 3. Lưu đơn hàng

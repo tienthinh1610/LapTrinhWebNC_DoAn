@@ -1,17 +1,43 @@
 <table class="table table-sm table-striped table-bordered">
     <thead>
-        <tr><th colspan="5" class="text-center">@TableTitle</th></tr>
+        <!-- Cột tiêu đề chính, vẫn giữ colspan 5 -->
+        <tr><th colspan="5" class="text-center bg-dark text-white">@TableTitle</th></tr>
+        
+        <!-- Hàng tiêu đề các cột dữ liệu -->
+        <tr>
+            <th>Khách hàng & ĐT</th>
+            <th>Địa chỉ giao hàng</th>
+            <th>Sản phẩm</th> 
+            <th>SL & Size</th> 
+            <th>Thao tác</th>
+        </tr>
     </thead>
     <tbody>
         @if (Orders?.Count() > 0) {
             @foreach (Order o in Orders) {
                 <tr>
-                    <td>@o.Name</td>
-                    <td>@o.Zip</td>
+                    <!-- Cột 1: Tên & Số điện thoại -->
+                    <td class="align-middle">
+                        <span class="fw-bold">@o.Name</span><br />
+                        <small class="text-primary">@o.PhoneNumber</small>
+                    </td>
+                    
+                    <!-- Cột 2: Địa chỉ đầy đủ -->
+                    <td>
+                        @o.Line1 <br />
+                        @if (!string.IsNullOrEmpty(o.Line2)) { <span>@o.Line2 <br /></span> }
+                        @if (!string.IsNullOrEmpty(o.Line3)) { <span>@o.Line3 <br /></span> }
+                        @o.City, @o.State, @o.Zip<br />
+                        <span class="text-muted">@o.Country</span>
+                    </td>
+                    
+                    <!-- Cột 3 & 4: Headers cho các dòng chi tiết -->
                     <th>Sản phẩm</th> 
                     <th>SL & Size</th> 
-                    <td>
-                        <button class="btn btn-sm btn-danger"
+                    
+                    <!-- Cột 5: Thao tác -->
+                    <td class="align-middle">
+                        <button class="btn btn-sm btn-danger w-100"
                                 @onclick="@(e => OrderSelected.InvokeAsync(o.OrderID))">
                             @ButtonLabel
                         </button>
@@ -21,23 +47,25 @@
                 @* Lặp qua chi tiết từng dòng đơn hàng *@
                 @foreach (OrderLine line in o.Lines) { 
                     <tr>
-                        <td colspan="2"></td>
+                        <!-- colspan="2" để căn chỉnh với 2 cột thông tin khách hàng -->
+                        <td colspan="2"></td> 
                         
-                        @* Hiển thị Tên Sản phẩm *@
-                        <td>
+                        @* Cột Tên Sản phẩm *@
+                        <td class="align-middle">
                             <span class="fw-bold">@line.ProductName</span>
                         </td>
                         
-                        @* 🌟 ĐIỀU CHỈNH: Hiển thị Size và Quantity rõ ràng hơn *@
-                        <td>
+                        @* Cột SL & Size *@
+                        <td class="align-middle">
                             @line.Quantity x 
-                            <span class="badge bg-info text-dark">Size: @line.ProductSize</span>
+                            <span class="badge bg-info text-dark">@line.ProductSize</span>
                         </td>
                         <td></td>
                     </tr>
                 }
             }
         } else {
+            <!-- Giữ colspan="5" cho hàng thông báo "Không có đơn hàng" -->
             <tr><td colspan="5" class="text-center">Không có đơn hàng nào</td></tr>
         }
     </tbody>

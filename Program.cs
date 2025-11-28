@@ -3,17 +3,21 @@ using SportsStore.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 using SportsStore.Areas.Identity.Data;
-// using SportsStore.Data; // Thêm namespace nếu ApplicationDbContext nằm ở đây
+using SportsStore.Services; // 👈 THÊM DÒNG NÀY: Để nhận diện lớp EmailSender
+using Microsoft.AspNetCore.Identity.UI.Services; // 👈 THÊM DÒNG NÀY: Để nhận diện interface IEmailSender
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews(); // Chỉ khai báo một lần
+// Dòng này đã được xử lý ở dưới với AddJsonOptions, nên có thể xóa ở đây nếu trùng lặp.
+// Tuy nhiên, nếu bạn muốn giữ nó ở đầu để đảm bảo Controller/View hoạt động sớm, hãy giữ lại.
+// builder.Services.AddControllersWithViews(); 
 
 // Khai báo StoreDbContext (Quản lý sản phẩm)
 builder.Services.AddDbContext<StoreDbContext>(opts => {
     opts.UseSqlServer(
         builder.Configuration["ConnectionStrings:SportsStoreConnection"]);
 });
+
 
 // 🌟 PHẦN SỬA LỖI QUAN TRỌNG: Cấu hình Identity 🌟
 // 1. Khai báo DbContext của Identity (ĐÃ ĐỔI TÊN THÀNH AppIdentityDbContext)
@@ -23,14 +27,15 @@ builder.Services.AddDbContext<AppIdentityDbContext>(options =>
 
 // 2. Cấu hình Identity với ApplicationUser và sử dụng AppIdentityDbContext
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
-    options.SignIn.RequireConfirmedAccount = true)
+    options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<AppIdentityDbContext>() // ĐÃ ĐỔI TÊN THÀNH AppIdentityDbContext
-    .AddDefaultTokenProviders(); // Quan trọng để hỗ trợ các chức năng như reset password
+    .AddDefaultTokenProviders(); 
 
-// Xóa các dòng cấu hình Identity bị trùng lặp/xung đột trước đó:
-// - Bỏ `builder.Services.AddDefaultIdentity<ApplicationUser>(...).AddEntityFrameworkStores<ApplicationDbContext>();`
-// - Bỏ `builder.Services.AddDbContext<AppIdentityDbContext>(...)` // Dòng này bị xóa hoặc thay thế
-// - Bỏ `builder.Services.AddIdentity<IdentityUser, IdentityRole>()...`
+// 🎯 DÒNG QUAN TRỌNG NHẤT: ĐĂNG KÝ DỊCH VỤ GỬI EMAIL GIẢ 🎯
+// Giải quyết lỗi System.InvalidOperationException: Unable to resolve service for type 'IEmailSender'
+builder.Services.AddTransient<IEmailSender, EmailSender>(); 
+
+
 
 builder.Services.AddScoped<IStoreRepository, EFStoreRepository>();
 builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
@@ -42,6 +47,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddServerSideBlazor();
 
 // Cấu hình Controller và JSON (Đã hợp nhất với khai báo đầu tiên, nhưng giữ lại ở đây để chứa AddJsonOptions)
+// Nếu dòng AddControllersWithViews() đầu tiên bị xóa, dòng này sẽ được dùng.
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
@@ -59,6 +65,7 @@ if (app.Environment.IsProduction()) {
 app.UseStaticFiles();
 app.UseSession();
 
+app.UseRouting();
 // Thêm Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();

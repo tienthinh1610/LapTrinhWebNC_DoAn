@@ -1,7 +1,7 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Đăng ký"; // Đã dịch tiêu đề
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -9,39 +9,68 @@
 <div class="row">
     <div class="col-md-4">
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
+            <h2>Tạo tài khoản mới.</h2> @* Đã dịch tiêu đề *@
             <hr />
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            @* Trường Email *@
             <div class="form-floating mb-3">
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <label asp-for="Input.Email">Email</label>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
+
+            @* 🌟 THÊM TRƯỜNG TÙY CHỈNH: HỌ VÀ TÊN (FullName) 🌟 *@
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FullName" class="form-control" placeholder="Nguyễn Văn A" />
+                <label asp-for="Input.FullName">Họ và Tên</label> @* Label đã dịch *@
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            @* 🌟 THÊM TRƯỜNG TÙY CHỈNH: NGÀY SINH (DateOfBirth) 🌟 *@
+            <div class="form-floating mb-3">
+                @* Dùng type="date" để hiển thị control chọn ngày phù hợp *@
+                <input asp-for="Input.DateOfBirth" class="form-control" type="date" placeholder="yyyy-mm-dd" />
+                <label asp-for="Input.DateOfBirth">Ngày sinh</label> @* Label đã dịch *@
+                <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
+            </div>
+
+            @* 🌟 THÊM TRƯỜNG TÙY CHỈNH: ĐỊA CHỈ (Address) 🌟 *@
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Address" class="form-control" placeholder="123 Đường ABC, Quận XYZ" />
+                <label asp-for="Input.Address">Địa chỉ</label> @* Label đã dịch *@
+                <span asp-validation-for="Input.Address" class="text-danger"></span>
+            </div>
+
+            @* Trường Mật khẩu *@
             <div class="form-floating mb-3">
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
+                <label asp-for="Input.Password">Mật khẩu</label> @* Label đã dịch *@
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
+
+            @* Trường Xác nhận Mật khẩu *@
             <div class="form-floating mb-3">
                 <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                <label asp-for="Input.ConfirmPassword">Xác nhận mật khẩu</label> @* Label đã dịch *@
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Đăng ký</button> @* Đã dịch nút *@
         </form>
     </div>
     <div class="col-md-6 col-md-offset-2">
         <section>
-            <h3>Use another service to register.</h3>
+            <h3>Sử dụng dịch vụ khác để đăng ký.</h3> @* Đã dịch tiêu đề *@
             <hr />
             @{
                 if ((Model.ExternalLogins?.Count ?? 0) == 0)
                 {
                     <div>
                         <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
+                            Không có dịch vụ xác thực bên ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">bài viết này</a>
+                            về việc thiết lập ứng dụng ASP.NET Core này để hỗ trợ đăng nhập qua các dịch vụ bên ngoài.
+                        </p> @* Đã dịch nội dung *@
                     </div>
                 }
                 else
@@ -51,7 +80,7 @@
                             <p>
                                 @foreach (var provider in Model.ExternalLogins!)
                                 {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Đăng nhập bằng tài khoản @provider.DisplayName">@provider.DisplayName</button> @* Đã dịch title *@
                                 }
                             </p>
                         </div>
